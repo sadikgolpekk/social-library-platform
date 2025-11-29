@@ -6,7 +6,7 @@ from .views import (
     OzelListeGorunum, OzelListeIcerikGorunum,
     AktiviteGorunum,
     kullanici_kayit, kullanici_giris, sifre_sifirla,
-    global_arama, icerik_detay, feed,kullanici_ara,takip_sil,kutuphane_durum,kutuphane_durum,ozel_liste_icerik_kontrol,ozel_listeleri_getir
+    global_arama, icerik_detay, feed,kullanici_ara,takip_sil,kutuphane_durum,kutuphane_durum,ozel_liste_icerik_kontrol,ozel_listeleri_getir,kutuphane_sil
 )
 
 router = routers.DefaultRouter()
@@ -45,6 +45,9 @@ urlpatterns = [
     path("kutuphane-durum/", kutuphane_durum),
     path("ozel-listeler/", ozel_listeleri_getir),
     path("ozel-liste-icerik-kontrol/", ozel_liste_icerik_kontrol),
+
+
+    path("kutuphane-sil/", kutuphane_sil, name="kutuphane_sil"),
 
 
 

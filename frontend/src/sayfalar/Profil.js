@@ -287,6 +287,49 @@ export default function Profil() {
     }
   }
 
+
+  
+
+  // ---------------------------------------------------------
+  // KÜTÜPHANEDEN SİLME
+  // ---------------------------------------------------------
+  async function silKutup(content_id, content_type) {
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/kutuphane-sil/?kullanici=${aktifId}&content_id=${content_id}`,
+        { method: "DELETE" }
+      );
+
+      if (res.status === 204) {
+        setProfil((prev) => ({
+          ...prev,
+          kutuphane_izlediklerim: prev.kutuphane_izlediklerim.filter(k => k.id !== content_id),
+          kutuphane_izlenecekler: prev.kutuphane_izlenecekler.filter(k => k.id !== content_id),
+          kutuphane_okuduklarim: prev.kutuphane_okuduklarim.filter(k => k.id !== content_id),
+          kutuphane_okunacaklar: prev.kutuphane_okunacaklar.filter(k => k.id !== content_id),
+        }));
+
+        setSnackbar({
+          acik: true,
+          mesaj: "Kütüphaneden kaldırıldı.",
+          tip: "success",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setSnackbar({
+        acik: true,
+        mesaj: "Kütüphane silme hatası!",
+        tip: "error",
+      });
+    }
+  }
+
+
+
+
+
+
   // ---------------------------------------------------------
   // YENİ ÖZEL LİSTE OLUŞTUR
   // ---------------------------------------------------------
@@ -470,66 +513,68 @@ export default function Profil() {
       {/* --------------------------------------------------------- */}
       {/* TABS */}
       {/* --------------------------------------------------------- */}
-      {kendiProfili && (
+      
         <Tabs value={tab} onChange={(e, y) => setTab(y)} sx={{ mb: 3 }}>
           <Tab label="İzlediklerim" />
           <Tab label="İzlenecekler" />
           <Tab label="Okuduklarım" />
           <Tab label="Okunacaklar" />
         </Tabs>
-      )}
+      
 
       {/* --------------------------------------------------------- */}
       {/* TAB İÇERİKLERİ */}
       {/* --------------------------------------------------------- */}
-      {kendiProfili && (
-        <Grid container spacing={3} sx={{ mb: 5 }}>
-          {(tab === 0 && profil.kutuphane_izlediklerim) ||
-          (tab === 1 && profil.kutuphane_izlenecekler) ||
-          (tab === 2 && profil.kutuphane_okuduklarim) ||
-          (tab === 3 && profil.kutuphane_okunacaklar)
-            ? (
-                (tab === 0
-                  ? profil.kutuphane_izlediklerim
-                  : tab === 1
-                  ? profil.kutuphane_izlenecekler
-                  : tab === 2
-                  ? profil.kutuphane_okuduklarim
-                  : profil.kutuphane_okunacaklar
-                ).map((icerik, idx) => (
-                  <Grid key={idx} item xs={12} sm={6} md={4}>
-                    <Card sx={{ borderRadius: 3 }}>
-                      <CardContent>
-                        <img
-                      src={icerik.kapak}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        borderRadius: 12,
-                        marginBottom: 10,
-                        cursor: "pointer"
-                      }}
-                      onClick={() => navigate(`/detay/${icerik.tur}/${icerik.id}`)}
-                    />
+      <Grid container spacing={3} sx={{ mb: 5 }}>
+  {(
+    tab === 0 ? profil.kutuphane_izlediklerim :
+    tab === 1 ? profil.kutuphane_izlenecekler :
+    tab === 2 ? profil.kutuphane_okuduklarim :
+                profil.kutuphane_okunacaklar
+  ).map((icerik, idx) => (
+    <Grid key={idx} item xs={12} sm={6} md={4}>
+      <Card sx={{ borderRadius: 3 }}>
+        <CardContent>
+          <img
+            src={icerik.kapak}
+            alt=""
+            style={{
+              width: "100%",
+              borderRadius: 12,
+              marginBottom: 10,
+              cursor: "pointer",
+            }}
+            onClick={() => navigate(`/detay/${icerik.tur}/${icerik.id}`)}
+          />
 
-                        <Typography variant="h6">{icerik.baslik}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {icerik.yil}
-                        </Typography>
-                        <Typography sx={{ mt: 1 }}>
-                          ⭐ Platform: {icerik.platform_puani}
-                        </Typography>
-                        <Typography>
-                          🟦 Senin puanın: {icerik.kullanici_puani ?? "-"}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))
-              )
-            : null}
-        </Grid>
-      )}
+          <Typography variant="h6">{icerik.baslik}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {icerik.yil}
+          </Typography>
+          <Typography sx={{ mt: 1 }}>
+            ⭐ Platform: {icerik.platform_puani}
+          </Typography>
+          <Typography>
+            🟦 Verilen Puan: {icerik.kullanici_puani ?? "-"}
+          </Typography>
+
+          {/* Düzenleme sadece profil sahibine */}
+          {kendiProfili && (
+            <Button
+              size="small"
+              color="error"
+              sx={{ mt: 1 }}
+              onClick={() => silKutup(icerik.id, icerik.tur)}
+            >
+              Kütüphaneden Kaldır
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </Grid>
+  ))}
+</Grid>
+
 
       <Divider sx={{ my: 4 }} />
 

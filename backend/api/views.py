@@ -670,3 +670,32 @@ def ozel_liste_icerik_kontrol(request):
     ).values_list("liste_id", flat=True)
 
     return Response({"listeler": list(liste_ids)})
+
+
+
+
+# api/views.py
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Kutuphane
+
+@api_view(["DELETE"])
+def kutuphane_sil(request):
+    kullanici = request.GET.get("kullanici")
+    content_id = request.GET.get("content_id")
+
+    if not kullanici or not content_id:
+        return Response(
+            {"error": "kullanici ve content_id gereklidir."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # İlgili tüm kütüphane kayıtlarını sil
+    silinen = Kutuphane.objects.filter(
+        kullanici_id=kullanici,
+        content_id=content_id
+    ).delete()
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
