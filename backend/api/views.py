@@ -226,14 +226,16 @@ class OzelListeGorunum(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        kullanici = self.request.GET.get("kullanici")
+        # PATCH, DELETE, PUT sırasında tüm listeleri izin ver
+        if self.request.method in ["PATCH", "DELETE", "PUT"]:
+            return OzelListe.objects.all()
 
-        # 🔒 Kullanıcı parametresi gelmezse boş liste döndür (güvenlik)
+        kullanici = self.request.GET.get("kullanici")
         if not kullanici:
             return OzelListe.objects.none()
 
-        # 🔥 Sadece giriş yapan kullanıcının listeleri
-        return OzelListe.objects.filter(kullanici_id=kullanici).select_related("kullanici")
+        return OzelListe.objects.filter(kullanici_id=kullanici)
+
 
 
 class OzelListeIcerikGorunum(viewsets.ModelViewSet):
