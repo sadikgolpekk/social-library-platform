@@ -116,3 +116,32 @@ class Aktivite(models.Model):
 
     def __str__(self):
         return f"{self.kullanici.username} - {self.aktivite_turu}"
+
+
+
+
+class AktiviteLike(models.Model):
+    aktivite = models.ForeignKey(Aktivite, on_delete=models.CASCADE, related_name="likes")
+    kullanici = models.ForeignKey(User, on_delete=models.CASCADE)
+    tarih = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = ("aktivite", "kullanici")
+
+    def __str__(self):
+        return f"{self.kullanici.username} → Aktivite {self.aktivite.id}"
+
+
+
+
+
+
+
+class AktiviteYorum(models.Model):
+    aktivite = models.ForeignKey(Aktivite, on_delete=models.CASCADE, related_name="yorumlar")
+    kullanici = models.ForeignKey(User, on_delete=models.CASCADE)
+    yorum = models.TextField()
+    tarih = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.kullanici.username} → Aktivite {self.aktivite.id}"

@@ -562,6 +562,17 @@ def feed(request, user_id):
 
     serializer = AktiviteSerializer(slice_qs, many=True)
 
+        # --- Beğenilen aktiviteler ---
+    liked_ids = set(
+        AktiviteLike.objects.filter(kullanici=user)
+        .values_list("aktivite_id", flat=True)
+    )
+
+    # --- Her aktiviteye liked_by_me ekle ---
+    for a in serializer.data:
+        a["liked_by_me"] = a["id"] in liked_ids
+
+
     sonraki_sayfa = None
     if toplam > offset + limit:
         sonraki_sayfa = sayfa + 1
@@ -1000,5 +1011,107 @@ def gelismis_filtre(request):
 
 
 
+from .models import AktiviteLike, AktiviteYorum
 
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def aktivite_like(request):
+    user_id = request.data.get("kullanici")
+    aktivite_id = request.data.get("aktivite")
+
+    if not user_id or not aktivite_id:
+        return Response({"hata": "kullanici ve aktivite zorunlu"}, status=400)
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"hata": "Kullanıcı bulunamadı"}, status=404)
+
+    try:
+        aktivite = Aktivite.objects.get(id=aktivite_id)
+    except Aktivite.DoesNotExist:
+        return Response({"hata": "Aktivite bulunamadı"}, status=404)
+
+    # Toggle (varsa sil, yoksa ekle)
+    mevcut = AktiviteLike.objects.filter(kullanici=user, aktivite=aktivite).first()
+
+    if mevcut:
+        mevcut.delete()
+        return Response({"mesaj": "Beğeni kaldırıldı", "liked": False})
+
+    AktiviteLike.objects.create(
+        kullanici=user,
+        aktivite=aktivite,
+    )
+    return Response({"mesaj": "Beğenildi", "liked": True})
+
+
+
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def aktivite_yorum(request):
+    user_id = request.data.get("kullanici")
+    aktivite_id = request.data.get("aktivite")
+    yorum_metin = request.data.get("yorum")
+
+    if not all([user_id, aktivite_id, yorum_metin]):
+        return Response({"hata": "kullanici, aktivite, yorum zorunlu"}, status=400)
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"hata": "Kullanıcı bulunamadı"}, status=404)
+
+    try:
+        aktivite = Aktivite.objects.get(id=aktivite_id)
+    except Aktivite.DoesNotExist:
+        return Response({"hata": "Aktivite bulunamadı"}, status=404)
+
+    yorum = AktiviteYorum.objects.create(
+        kullanici=user,
+        aktivite=aktivite,
+        yorum=yorum_metin
+    )
+
+    return Response({
+        "mesaj": "Yorum eklendi",
+        "yorum": {
+            "id": yorum.id,
+            "kullanici": user.username,
+            "yorum": yorum.yorum,
+            "tarih": yorum.tarih
+        }
+    }, status=201)
+
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def aktivite_yorumlar(request, aktivite_id):
+    try:
+        from .models import AktiviteYorum
+        aktivite_yorumlari = (
+            AktiviteYorum.objects
+            .filter(aktivite_id=aktivite_id)
+            .select_related("kullanici")
+            .order_by("-tarih")
+        )
+
+        sonuc = []
+        for y in aktivite_yorumlari:
+            sonuc.append({
+                "id": y.id,
+                "kullanici_adi": y.kullanici.username,
+                "kullanici_avatar": getattr(y.kullanici.profil, "avatar", None),
+                "yorum": y.yorum,
+                "tarih": y.tarih.strftime("%d.%m.%Y %H:%M"),
+            })
+
+        return Response({"yorumlar": sonuc})
+
+    except Exception as e:
+        print("Yorumlar getirilemedi:", e)
+        return Response({"yorumlar": []})
 

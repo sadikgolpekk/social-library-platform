@@ -6,7 +6,9 @@ from .views import (
     OzelListeGorunum, OzelListeIcerikGorunum,
     AktiviteGorunum,
     kullanici_kayit, kullanici_giris, sifre_sifirla,
-    global_arama, icerik_detay, feed,kullanici_ara,takip_sil,kutuphane_durum,kutuphane_durum,ozel_liste_icerik_kontrol,ozel_listeleri_getir,kutuphane_sil,ozel_liste_sil,ozel_liste_icerik_sil,ozel_liste_duzenle,vitrin_en_populer,vitrin_en_yuksek_puanli,gelismis_filtre
+    global_arama, icerik_detay, feed,kullanici_ara,takip_sil,kutuphane_durum,kutuphane_durum,ozel_liste_icerik_kontrol
+    ,ozel_listeleri_getir,kutuphane_sil,ozel_liste_sil,ozel_liste_icerik_sil,ozel_liste_duzenle,vitrin_en_populer
+    ,vitrin_en_yuksek_puanli,gelismis_filtre,aktivite_like,aktivite_yorum,aktivite_yorumlar
 )
 
 router = routers.DefaultRouter()
@@ -61,6 +63,10 @@ urlpatterns = [
   path("vitrin-en-populer/", vitrin_en_populer),
   path("gelismis-filtre/", gelismis_filtre),
 
+  path("aktivite-like/", aktivite_like),
+  path("aktivite-yorum/", aktivite_yorum),
+
+  path("aktivite-yorumlar/<int:aktivite_id>/",aktivite_yorumlar),
 
 
 ]

@@ -375,6 +375,7 @@ class OzelListeSerializer(serializers.ModelSerializer):
 
 
 
+
 # ------------------------------
 # AKTIVITE
 # ------------------------------
@@ -385,6 +386,11 @@ class AktiviteSerializer(serializers.ModelSerializer):
     hedef_kullanici = serializers.SerializerMethodField()
     tarih_nice = serializers.SerializerMethodField()
     content_info = serializers.SerializerMethodField()
+
+    # ⭐ YENİ EKLEDİK
+    like_sayisi = serializers.SerializerMethodField()
+    yorum_sayisi = serializers.SerializerMethodField()
+    liked_by_me = serializers.SerializerMethodField()
 
     class Meta:
         model = Aktivite
@@ -402,6 +408,11 @@ class AktiviteSerializer(serializers.ModelSerializer):
             "tarih_nice",
             "poster",
             "content_info",
+
+            # ⭐ YENİ ALANLAR
+            "like_sayisi",
+            "yorum_sayisi",
+            "liked_by_me",
         ]
 
     # ------------------------------
@@ -474,3 +485,21 @@ class AktiviteSerializer(serializers.ModelSerializer):
     # ------------------------------
     def get_tarih_nice(self, obj):
         return naturaltime(obj.tarih)
+
+    # ============================================================
+    # ⭐⭐ YENİ: Beğeni & Yorum Sayısı Sistemleri ⭐⭐
+    # ============================================================
+    def get_like_sayisi(self, obj):
+        from .models import AktiviteLike
+        return AktiviteLike.objects.filter(aktivite=obj).count()
+
+    def get_yorum_sayisi(self, obj):
+        from .models import AktiviteYorum
+        return AktiviteYorum.objects.filter(aktivite=obj).count()
+
+    def get_liked_by_me(self, obj):
+        from .models import AktiviteLike
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return AktiviteLike.objects.filter(aktivite=obj, kullanici=request.user).exists()
