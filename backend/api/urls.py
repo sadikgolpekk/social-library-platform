@@ -6,7 +6,7 @@ from .views import (
     OzelListeGorunum, OzelListeIcerikGorunum,
     AktiviteGorunum,
     kullanici_kayit, kullanici_giris, sifre_sifirla,
-    global_arama, icerik_detay, feed,kullanici_ara,takip_sil,kutuphane_durum,kutuphane_durum,ozel_liste_icerik_kontrol,ozel_listeleri_getir,kutuphane_sil,ozel_liste_sil,ozel_liste_icerik_sil,ozel_liste_duzenle
+    global_arama, icerik_detay, feed,kullanici_ara,takip_sil,kutuphane_durum,kutuphane_durum,ozel_liste_icerik_kontrol,ozel_listeleri_getir,kutuphane_sil,ozel_liste_sil,ozel_liste_icerik_sil,ozel_liste_duzenle,vitrin_en_populer,vitrin_en_yuksek_puanli,gelismis_filtre
 )
 
 router = routers.DefaultRouter()
@@ -19,6 +19,8 @@ router.register("kutuphane", KutuphaneGorunum)
 router.register("aktivite", AktiviteGorunum, basename="aktivite")
 router.register("ozel-liste", OzelListeGorunum, basename="ozel-liste")
 router.register("ozel-liste-icerik", OzelListeIcerikGorunum, basename="ozel-liste-icerik")
+
+
 
 
 urlpatterns = [
@@ -55,6 +57,9 @@ urlpatterns = [
   path("ozel-liste-sil/",ozel_liste_sil),
   path("ozel-liste-duzenle/",ozel_liste_duzenle),
   path("ozel-liste-icerik-sil/",ozel_liste_icerik_sil),
+  path("vitrin-en-yuksek-puanli/", vitrin_en_yuksek_puanli),
+  path("vitrin-en-populer/", vitrin_en_populer),
+  path("gelismis-filtre/", gelismis_filtre),
 
 
 

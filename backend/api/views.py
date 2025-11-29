@@ -9,6 +9,8 @@ from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.db.models import Q, Avg
 from django.utils import timezone
+from django.db.models import Count, Avg, Q
+
 
 import requests
 import json
@@ -785,3 +787,218 @@ def ozel_liste_icerik_sil(request):
     ).delete()
 
     return Response(status=204)
+
+
+
+
+
+def vitrin_icerik_detay(tur, content_id):
+    """
+    Vitrin için içerik detaylarını çeker (film/kitap)
+    """
+    # ---- Filmler ----
+    if tur == "film":
+        try:
+            url = f"https://api.themoviedb.org/3/movie/{content_id}?api_key={TMDB_KEY}&language=tr-TR"
+            r = requests.get(url).json()
+
+            return {
+                "id": content_id,
+                "tur": "film",
+                "baslik": r.get("title"),
+                "ozet": r.get("overview", ""),
+                "kapak": f"https://image.tmdb.org/t/p/w500{r.get('poster_path')}" if r.get("poster_path") else "",
+            }
+        except:
+            return None
+
+    # ---- Kitaplar ----
+    if tur == "kitap":
+        try:
+            url = f"https://www.googleapis.com/books/v1/volumes/{content_id}"
+            r = requests.get(url).json()
+            info = r.get("volumeInfo", {})
+
+            return {
+                "id": content_id,
+                "tur": "kitap",
+                "baslik": info.get("title"),
+                "ozet": info.get("description", ""),
+                "kapak": info.get("imageLinks", {}).get("thumbnail", ""),
+            }
+        except:
+            return None
+
+    return None
+
+
+
+
+
+
+
+
+
+@api_view(["GET"])
+def vitrin_en_yuksek_puanli(request):
+    # ---- Filmlerin Puan Ortalamaları ----
+    film_puanlar = (
+        Puan.objects.filter(content_type="film")
+        .values("content_id")
+        .annotate(ortalama=Avg("puan"))
+        .order_by("-ortalama")[:10]
+    )
+
+    # ---- Kitapların Puan Ortalamaları ----
+    kitap_puanlar = (
+        Puan.objects.filter(content_type="kitap")
+        .values("content_id")
+        .annotate(ortalama=Avg("puan"))
+        .order_by("-ortalama")[:10]
+    )
+
+    filmler = []
+    for f in film_puanlar:
+        detay = vitrin_icerik_detay("film", f["content_id"])
+        if detay:
+            detay["ortalama_puan"] = float(f["ortalama"])
+            filmler.append(detay)
+
+    kitaplar = []
+    for k in kitap_puanlar:
+        detay = vitrin_icerik_detay("kitap", k["content_id"])
+        if detay:
+            detay["ortalama_puan"] = float(k["ortalama"])
+            kitaplar.append(detay)
+
+    return Response({
+        "filmler": filmler,
+        "kitaplar": kitaplar
+    })
+
+
+
+
+@api_view(["GET"])
+def vitrin_en_populer(request):
+    # Yorum sayıları
+    yorum_populer = (
+        Yorum.objects.values("content_id", "content_type")
+        .annotate(yorum_sayisi=Count("id"))
+    )
+
+    # Özel liste eklenme sayıları
+    liste_populer = (
+        OzelListeIcerik.objects.values("content_id", "content_type")
+        .annotate(liste_sayisi=Count("id"))
+    )
+
+    skor_map = {}
+
+    # yorum skor
+    for y in yorum_populer:
+        key = (y["content_id"], y["content_type"])
+        skor_map[key] = skor_map.get(key, 0) + y["yorum_sayisi"]
+
+    # özel liste skor
+    for l in liste_populer:
+        key = (l["content_id"], l["content_type"])
+        skor_map[key] = skor_map.get(key, 0) + l["liste_sayisi"]
+
+    # ilk 20
+    sirali = sorted(skor_map.items(), key=lambda x: x[1], reverse=True)[:20]
+
+    sonuc = []
+    for (content_id, content_type), skor in sirali:
+        detay = vitrin_icerik_detay(content_type, content_id)
+        if detay:
+            detay["populer_skor"] = skor
+            sonuc.append(detay)
+
+    return Response({
+        "populer": sonuc
+    })
+
+
+
+
+
+
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def gelismis_filtre(request):
+    tur = request.GET.get("tur")
+    min_puan = float(request.GET.get("min_puan", 0))
+    max_puan = float(request.GET.get("max_puan", 10))
+    sirala = request.GET.get("sirala")
+
+    # --- 1) TÜRE GÖRE FILTRE ---
+    puan_qs = (
+        Puan.objects.values("content_id", "content_type")
+        .annotate(
+            ortalama=Avg("puan"),
+            oy_sayisi=Count("id")
+        )
+    )
+
+    # Tür seçilmişse filtrele
+    if tur:
+        puan_qs = puan_qs.filter(content_type=tur)
+
+    sonuc_listesi = []
+
+    # --- 2) PUAN ARALIĞINA GÖRE FİLTRE ---
+    for p in puan_qs:
+        ortalama = float(p["ortalama"] or 0)
+
+        if not (min_puan <= ortalama <= max_puan):
+            continue
+
+        content_id = p["content_id"]
+        content_type = p["content_type"]
+
+        detay = vitrin_icerik_detay(content_type, content_id)
+        if not detay:
+            continue
+
+        detay["ortalama_puan"] = ortalama
+        detay["oy_sayisi"] = p["oy_sayisi"]
+
+        sonuc_listesi.append(detay)
+
+    # --- 3) SIRALAMA ---
+    # En yüksek puan
+    if sirala == "puan":
+        sonuc_listesi.sort(key=lambda x: x.get("ortalama_puan", 0), reverse=True)
+
+    # En popüler (yorum + liste toplamı)
+    elif sirala == "populerlik":
+        for item in sonuc_listesi:
+            yorum_sayisi = Yorum.objects.filter(
+                content_id=item["id"],
+                content_type=item["tur"]
+            ).count()
+
+            liste_sayisi = OzelListeIcerik.objects.filter(
+                content_id=item["id"],
+                content_type=item["tur"]
+            ).count()
+
+            item["populer_skor"] = yorum_sayisi + liste_sayisi
+
+        sonuc_listesi.sort(key=lambda x: x.get("populer_skor", 0), reverse=True)
+
+    return Response({"sonuclar": sonuc_listesi})
+
+
+
+
+
+
+
+
+
+
+
