@@ -1,0 +1,71 @@
+# ---- PYTHON / BACKEND ----
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dylib
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.*
+
+# ---- NODE / FRONTEND ----
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+
+# Lock files (isteğe bağlı)
+package-lock.json
+yarn.lock
+
+# React / NextJS specific
+.next/
+.cache/
+out/
+*.tsbuildinfo
+
+# ---- GENERAL ----
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# ---- PROJECT SPECIFIC ----
+
+# PDF / docx gibi büyük gereksiz dosyalar (istersen bırakabilirsin)
+*.pdf
+*.docx
