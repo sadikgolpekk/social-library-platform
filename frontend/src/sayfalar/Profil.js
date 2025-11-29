@@ -45,6 +45,27 @@ export default function Profil() {
   const [listeAd, setListeAd] = useState("");
   const [listeAciklama, setListeAciklama] = useState("");
 
+
+    // Özel Liste Düzenleme / Silme
+  const [duzenlenecekListe, setDuzenlenecekListe] = useState(null);
+  const [listeDuzenModal, setListeDuzenModal] = useState(false);
+  const [yeniAd, setYeniAd] = useState("");
+  const [yeniAciklama, setYeniAciklama] = useState("");
+
+  // Özel Listeden içerik silme
+  const [silinecekIcerik, setSilinecekIcerik] = useState(null);
+  const [icerikSilModal, setIcerikSilModal] = useState(false);
+
+  // Özel listeyi tamamen silme
+  const [listeSilModal, setListeSilModal] = useState(false);
+
+
+
+
+
+
+
+
   // Tabs
   const [tab, setTab] = useState(0);
 
@@ -324,6 +345,143 @@ export default function Profil() {
       });
     }
   }
+
+
+  // ---------------------------------------------------------
+  // ÖZEL LİSTE: Ad ve Açıklama Güncelle
+  // ---------------------------------------------------------
+  async function listeGuncelle() {
+    if (!yeniAd.trim()) {
+      setSnackbar({
+        acik: true,
+        mesaj: "Liste adı boş olamaz.",
+        tip: "warning",
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/ozel-liste/${duzenlenecekListe.id}/`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ad: yeniAd,
+            aciklama: yeniAciklama,
+          }),
+        }
+      );
+
+      if (res.ok) {
+        // frontend güncelle
+        setProfil((prev) => ({
+          ...prev,
+          ozel_listeler: prev.ozel_listeler.map((l) =>
+            l.id === duzenlenecekListe.id
+              ? { ...l, ad: yeniAd, aciklama: yeniAciklama }
+              : l
+          ),
+        }));
+
+        setListeDuzenModal(false);
+        setSnackbar({
+          acik: true,
+          mesaj: "Liste güncellendi!",
+          tip: "success",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setSnackbar({
+        acik: true,
+        mesaj: "Liste güncellenirken hata oluştu.",
+        tip: "error",
+      });
+    }
+  }
+
+
+
+  // ---------------------------------------------------------
+  // ÖZEL LİSTE: Tamamen Sil
+  // ---------------------------------------------------------
+  async function listeSil() {
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/ozel-liste/${duzenlenecekListe.id}/`,
+        { method: "DELETE" }
+      );
+
+      if (res.status === 204) {
+        // frontend güncelle
+        setProfil((prev) => ({
+          ...prev,
+          ozel_listeler: prev.ozel_listeler.filter(
+            (l) => l.id !== duzenlenecekListe.id
+          ),
+        }));
+
+        setListeSilModal(false);
+        setSnackbar({
+          acik: true,
+          mesaj: "Liste silindi.",
+          tip: "success",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setSnackbar({
+        acik: true,
+        mesaj: "Liste silinirken hata oluştu.",
+        tip: "error",
+      });
+    }
+  }
+
+
+
+  // ---------------------------------------------------------
+// ÖZEL LİSTE: İçerik Sil
+// ---------------------------------------------------------
+async function icerikSil() {
+  try {
+    const url = `http://127.0.0.1:8000/api/ozel-liste-icerik-sil/?liste=${duzenlenecekListe.id}&kullanici=${aktifId}&content_id=${silinecekIcerik.id}`;
+
+    const res = await fetch(url, { method: "DELETE" });
+
+    if (res.status === 204) {
+      // frontend güncelle
+      setProfil((prev) => ({
+        ...prev,
+        ozel_listeler: prev.ozel_listeler.map((l) =>
+          l.id === duzenlenecekListe.id
+            ? {
+                ...l,
+                icerikler: l.icerikler.filter(
+                  (i) => i.id !== silinecekIcerik.id
+                ),
+              }
+            : l
+        ),
+      }));
+
+      setIcerikSilModal(false);
+      setSnackbar({
+        acik: true,
+        mesaj: "İçerik listeden kaldırıldı.",
+        tip: "success",
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    setSnackbar({
+      acik: true,
+      mesaj: "İçerik silinirken hata oluştu.",
+      tip: "error",
+    });
+  }
+}
 
 
 
@@ -691,53 +849,115 @@ export default function Profil() {
 
 
       {/* --------------------------------------------------------- */}
-      {/* ÖZEL LİSTELER */}
-      {/* --------------------------------------------------------- */}
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
-        Özel Listeler
-      </Typography>
+{/* ÖZEL LİSTELER */}
+{/* --------------------------------------------------------- */}
+<Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
+  Özel Listeler
+</Typography>
 
-      <Grid container spacing={3}>
-        {profil.ozel_listeler?.map((l) => (
-          <Grid item xs={12} sm={6} md={4} key={l.id}>
-            <Card sx={{ borderRadius: 2 }}>
-              <CardContent>
-                <Typography variant="h6">{l.ad}</Typography>
+<Grid container spacing={3}>
+  {profil.ozel_listeler?.map((l) => (
+    <Grid item xs={12} sm={6} md={4} key={l.id}>
+      <Card sx={{ borderRadius: 2 }}>
+        <CardContent>
+          <Typography variant="h6">{l.ad}</Typography>
 
-                <Typography variant="body2" color="text.secondary">
-                  {l.aciklama || "Açıklama yok."}
-                </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {l.aciklama || "Açıklama yok."}
+          </Typography>
 
-                <Grid container spacing={2} sx={{mt:1}}>
-  {l.icerikler.map((ic) => (
-    <Grid item xs={6} key={ic.id}>
-      <Card
-      sx={{ p:1, borderRadius:2, cursor:"pointer" }}
-      onClick={() => navigate(`/detay/${ic.tur}/${ic.id}`)}
-    >
-        <img
-          src={ic.kapak}
-          alt=""
-          style={{width:"100%", borderRadius:10, marginBottom:8}}
-        />
-        <Typography variant="body1" fontWeight="bold">
-          {ic.baslik}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {ic.yil}
-        </Typography>
+          {/* Düzenle / Sil butonları (sadece kendi profili ise) */}
+          {kendiProfili && (
+            <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => {
+                  setDuzenlenecekListe(l);
+                  setYeniAd(l.ad);
+                  setYeniAciklama(l.aciklama || "");
+                  setListeDuzenModal(true);
+                }}
+              >
+                Düzenle
+              </Button>
+
+              <Button
+                size="small"
+                color="error"
+                variant="contained"
+                onClick={() => {
+                  setDuzenlenecekListe(l);
+                  setListeSilModal(true);
+                }}
+              >
+                Sil
+              </Button>
+            </Box>
+          )}
+
+          {/* Liste içerikleri */}
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            {l.icerikler.map((ic) => (
+              <Grid item xs={6} key={ic.id}>
+                <Card
+                  sx={{
+                    p: 1,
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    position: "relative",
+                  }}
+                  onClick={() => navigate(`/detay/${ic.tur}/${ic.id}`)}
+                >
+                  <img
+                    src={ic.kapak}
+                    alt=""
+                    style={{
+                      width: "100%",
+                      borderRadius: 10,
+                      marginBottom: 8,
+                    }}
+                  />
+
+                  {/* İçerik başlık bilgileri */}
+                  <Typography variant="body1" fontWeight="bold">
+                    {ic.baslik}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {ic.yil}
+                  </Typography>
+
+                  {/* İçerik silme butonu (sadece kendi profili) */}
+                  {kendiProfili && (
+                    <Button
+                      size="small"
+                      color="error"
+                      sx={{
+                        mt: 1,
+                        width: "100%",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Detay sayfasına gitmeyi engelle
+                        setDuzenlenecekListe(l);
+                        setSilinecekIcerik(ic);
+                        setIcerikSilModal(true);
+                      }}
+                    >
+                      İçeriği Kaldır
+                    </Button>
+                  )}
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </CardContent>
       </Card>
     </Grid>
   ))}
 </Grid>
 
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+<Divider sx={{ my: 4 }} />
 
-      <Divider sx={{ my: 4 }} />
 
       {/* --------------------------------------------------------- */}
       {/* SNACKBAR */}
@@ -756,54 +976,201 @@ export default function Profil() {
         </Alert>
       </Snackbar>
 
-      {/* --------------------------------------------------------- */}
-      {/* LİSTE OLUŞTUR MODAL */}
-      {/* --------------------------------------------------------- */}
-      <Modal open={listeModal} onClose={() => setListeModal(false)}>
-        <Box
-          sx={{
-            width: 400,
-            p: 4,
-            bgcolor: "background.paper",
-            borderRadius: 3,
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            boxShadow: 24,
-          }}
-        >
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-            Yeni Özel Liste
-          </Typography>
+     {/* --------------------------------------------------------- */}
+{/* LİSTE OLUŞTUR MODAL */}
+{/* --------------------------------------------------------- */}
+<Modal open={listeModal} onClose={() => setListeModal(false)}>
+  <Box
+    sx={{
+      width: 400,
+      p: 4,
+      bgcolor: "background.paper",
+      borderRadius: 3,
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      boxShadow: 24,
+    }}
+  >
+    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+      Yeni Özel Liste
+    </Typography>
 
-          <TextField
-            label="Liste Adı"
-            fullWidth
-            value={listeAd}
-            onChange={(e) => setListeAd(e.target.value)}
-            sx={{ mb: 2 }}
-          />
+    <TextField
+      label="Liste Adı"
+      fullWidth
+      value={listeAd}
+      onChange={(e) => setListeAd(e.target.value)}
+      sx={{ mb: 2 }}
+    />
 
-          <TextField
-            label="Açıklama"
-            fullWidth
-            multiline
-            rows={3}
-            value={listeAciklama}
-            onChange={(e) => setListeAciklama(e.target.value)}
-          />
+    <TextField
+      label="Açıklama"
+      fullWidth
+      multiline
+      rows={3}
+      value={listeAciklama}
+      onChange={(e) => setListeAciklama(e.target.value)}
+    />
 
-          <Button
-            variant="contained"
-            fullWidth
-            sx={{ mt: 2 }}
-            onClick={listeOlustur}
-          >
-            Oluştur
-          </Button>
-        </Box>
-      </Modal>
-    </Container>
-  );
+    <Button
+      variant="contained"
+      fullWidth
+      sx={{ mt: 2 }}
+      onClick={listeOlustur}
+    >
+      Oluştur
+    </Button>
+  </Box>
+</Modal>
+
+
+
+{/* --------------------------------------------------------- */}
+{/* 🔵 LİSTE DÜZENLE MODAL */}
+{/* --------------------------------------------------------- */}
+<Modal open={listeDuzenModal} onClose={() => setListeDuzenModal(false)}>
+  <Box
+    sx={{
+      width: 400,
+      p: 4,
+      bgcolor: "background.paper",
+      borderRadius: 3,
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      boxShadow: 24,
+    }}
+  >
+    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+      Listeyi Düzenle
+    </Typography>
+
+    <TextField
+      label="Liste Adı"
+      fullWidth
+      value={yeniAd}
+      onChange={(e) => setYeniAd(e.target.value)}
+      sx={{ mb: 2 }}
+    />
+
+    <TextField
+      label="Açıklama"
+      fullWidth
+      multiline
+      rows={3}
+      value={yeniAciklama}
+      onChange={(e) => setYeniAciklama(e.target.value)}
+    />
+
+    <Button
+      variant="contained"
+      fullWidth
+      sx={{ mt: 2 }}
+      onClick={listeGuncelle}
+    >
+      Kaydet
+    </Button>
+  </Box>
+</Modal>
+
+
+
+{/* --------------------------------------------------------- */}
+{/* 🔴 LİSTE SİLME MODAL */}
+{/* --------------------------------------------------------- */}
+<Modal open={listeSilModal} onClose={() => setListeSilModal(false)}>
+  <Box
+    sx={{
+      width: 350,
+      p: 4,
+      bgcolor: "background.paper",
+      borderRadius: 3,
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      boxShadow: 24,
+      textAlign: "center",
+    }}
+  >
+    <Typography variant="h6" fontWeight="bold">
+      Listeyi Silmek İstiyor Musun?
+    </Typography>
+
+    <Typography sx={{ mt: 1, mb: 3 }}>
+      Bu işlem geri alınamaz.
+    </Typography>
+
+    <Button
+      fullWidth
+      variant="contained"
+      color="error"
+      onClick={listeSil}
+    >
+      Evet, Sil
+    </Button>
+
+    <Button
+      fullWidth
+      sx={{ mt: 1 }}
+      onClick={() => setListeSilModal(false)}
+    >
+      İptal
+    </Button>
+  </Box>
+</Modal>
+
+
+
+{/* --------------------------------------------------------- */}
+{/* 🟣 İÇERİK SİLME MODAL */}
+{/* --------------------------------------------------------- */}
+<Modal open={icerikSilModal} onClose={() => setIcerikSilModal(false)}>
+  <Box
+    sx={{
+      width: 350,
+      p: 4,
+      bgcolor: "background.paper",
+      borderRadius: 3,
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      textAlign: "center",
+      boxShadow: 24,
+    }}
+  >
+    <Typography variant="h6" fontWeight="bold">
+      İçeriği Kaldırmak İstiyor Musun?
+    </Typography>
+
+    <Typography sx={{ mt: 1, mb: 3 }}>
+      Bu içerik sadece bu özel listeden kaldırılacaktır.
+    </Typography>
+
+    <Button
+      fullWidth
+      variant="contained"
+      color="error"
+      onClick={icerikSil}
+    >
+      Kaldır
+    </Button>
+
+    <Button
+      fullWidth
+      sx={{ mt: 1 }}
+      onClick={() => setIcerikSilModal(false)}
+    >
+      İptal
+    </Button>
+  </Box>
+</Modal>
+
+</Container>
+);
 }
+

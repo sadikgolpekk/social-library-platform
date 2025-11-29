@@ -220,9 +220,18 @@ class KutuphaneGorunum(viewsets.ModelViewSet):
 
 
 class OzelListeGorunum(viewsets.ModelViewSet):
-    queryset = OzelListe.objects.all().select_related("kullanici")
     serializer_class = OzelListeSerializer
     permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        kullanici = self.request.GET.get("kullanici")
+
+        # 🔒 Kullanıcı parametresi gelmezse boş liste döndür (güvenlik)
+        if not kullanici:
+            return OzelListe.objects.none()
+
+        # 🔥 Sadece giriş yapan kullanıcının listeleri
+        return OzelListe.objects.filter(kullanici_id=kullanici).select_related("kullanici")
 
 
 class OzelListeIcerikGorunum(viewsets.ModelViewSet):
@@ -692,10 +701,87 @@ def kutuphane_sil(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # İlgili tüm kütüphane kayıtlarını sil
+    # İlgili tüm kütüphane kayıtlarını sil 
     silinen = Kutuphane.objects.filter(
         kullanici_id=kullanici,
         content_id=content_id
     ).delete()
 
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+
+@api_view(["DELETE"])
+def ozel_liste_sil(request):
+    liste_id = request.GET.get("liste")
+    kullanici = request.GET.get("kullanici")
+
+    if not liste_id or not kullanici:
+        return Response({"hata": "liste ve kullanici zorunlu"}, status=400)
+
+    try:
+        liste = OzelListe.objects.get(id=liste_id, kullanici_id=kullanici)
+    except OzelListe.DoesNotExist:
+        return Response({"hata": "Liste bulunamadı veya yetki yok."}, status=404)
+
+    liste.delete()
+    return Response(status=204)
+
+
+
+
+
+
+@api_view(["PATCH"])
+def ozel_liste_duzenle(request):
+    liste_id = request.data.get("liste")
+    kullanici = request.data.get("kullanici")
+    yeni_ad = request.data.get("ad")
+    yeni_aciklama = request.data.get("aciklama")
+
+    if not liste_id or not kullanici:
+        return Response({"hata": "liste ve kullanici zorunlu"}, status=400)
+
+    try:
+        liste = OzelListe.objects.get(id=liste_id, kullanici_id=kullanici)
+    except OzelListe.DoesNotExist:
+        return Response({"hata": "Liste bulunamadı veya yetki yok."}, status=404)
+
+    if yeni_ad is not None:
+        liste.ad = yeni_ad
+
+    if yeni_aciklama is not None:
+        liste.aciklama = yeni_aciklama
+
+    liste.save()
+
+    return Response(OzelListeSerializer(liste).data, status=200)
+
+
+
+
+
+
+
+@api_view(["DELETE"])
+def ozel_liste_icerik_sil(request):
+    liste_id = request.GET.get("liste")
+    kullanici = request.GET.get("kullanici")
+    content_id = request.GET.get("content_id")
+
+    if not all([liste_id, kullanici, content_id]):
+        return Response({"hata": "liste, kullanici, content_id zorunlu"}, status=400)
+
+    try:
+        liste = OzelListe.objects.get(id=liste_id, kullanici_id=kullanici)
+    except OzelListe.DoesNotExist:
+        return Response({"hata": "Liste bulunamadı veya yetki yok."}, status=404)
+
+    silinen = OzelListeIcerik.objects.filter(
+        liste=liste,
+        content_id=content_id
+    ).delete()
+
+    return Response(status=204)
