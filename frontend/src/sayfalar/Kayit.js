@@ -14,6 +14,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  useTheme,
 } from "@mui/material";
 import {
   PersonAdd,
@@ -26,6 +27,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function Kayit() {
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const [form, setForm] = useState({
     kullaniciAdi: "",
@@ -40,7 +42,6 @@ export default function Kayit() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // 🔍 Şifre kuralları kontrol fonksiyonu
   const checkPassword = (sifre) => ({
     uzunluk: sifre.length >= 8,
     buyuk: /[A-Z]/.test(sifre),
@@ -56,13 +57,11 @@ export default function Kayit() {
     setError("");
     setSuccess("");
 
-    // 🔐 Şifre tekrar kontrolü
     if (form.sifre !== form.tekrar) {
       setError("⚠️ Şifreler eşleşmiyor!");
       return;
     }
 
-    // 🔐 Şifre kuralları
     if (!Object.values(sifreKurallari).every(Boolean)) {
       setError("⚠️ Şifre tüm koşulları sağlamıyor.");
       return;
@@ -82,8 +81,9 @@ export default function Kayit() {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess("Kayıt başarılı! Yönlendiriliyorsun...");
-        setTimeout(() => navigate("/"), 1500);
+        setSuccess("Kayıt başarılı! 3 saniye içinde yönlendiriliyorsunuz...");
+        // GÜNCELLENDİ: 3 Saniye (3000ms)
+        setTimeout(() => navigate("/"), 3000);
       } else {
         setError(data.hata || "Kayıt başarısız oldu!");
       }
@@ -93,29 +93,38 @@ export default function Kayit() {
     }
   };
 
+  const isDark = theme.palette.mode === 'dark';
+
   return (
     <Box
       sx={{
-        height: "100vh",
+        minHeight: "100vh", // height yerine minHeight kullandık ki mobilde içerik taşarsa scroll olsun
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         backgroundImage:
-          "linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('/images/kutuphane.jpeg')",
+          "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/images/kutuphane.jpeg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        p: 2, // Telefondan girenler için kenar boşluğu
       }}
     >
       <Fade in timeout={700}>
         <Paper
-          elevation={10}
+          elevation={24}
           sx={{
-            width: 440,
-            p: 4,
+            // RESPONSIVE AYARLAR BURADA:
+            width: "100%", 
+            maxWidth: 440, // Masaüstünde 440px'i geçmesin
+            p: { xs: 3, sm: 4 }, // Mobilde (xs) az boşluk, masaüstünde (sm ve üstü) çok boşluk
             borderRadius: 4,
-            backgroundColor: "rgba(255,255,255,0.9)",
-            backdropFilter: "blur(6px)",
+            backgroundColor: isDark 
+              ? "rgba(30, 30, 30, 0.85)" 
+              : "rgba(255, 255, 255, 0.9)",
+            backdropFilter: "blur(12px)",
             textAlign: "center",
+            border: isDark ? "1px solid rgba(255,255,255,0.1)" : "none",
+            color: theme.palette.text.primary,
           }}
         >
           <Avatar
@@ -125,7 +134,7 @@ export default function Kayit() {
               mb: 2,
               width: 56,
               height: 56,
-              boxShadow: 2,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
             }}
           >
             <PersonAdd />
@@ -136,7 +145,6 @@ export default function Kayit() {
           </Typography>
 
           <form onSubmit={handleSubmit}>
-            {/* Kullanıcı Adı */}
             <TextField
               label="Kullanıcı Adı"
               fullWidth
@@ -146,9 +154,9 @@ export default function Kayit() {
                 setForm({ ...form, kullaniciAdi: e.target.value })
               }
               required
+              variant="outlined"
             />
 
-            {/* Email */}
             <TextField
               label="E-posta"
               type="email"
@@ -159,7 +167,6 @@ export default function Kayit() {
               required
             />
 
-            {/* Şifre */}
             <TextField
               label="Şifre"
               type={showPassword ? "text" : "password"}
@@ -179,7 +186,7 @@ export default function Kayit() {
               }}
             />
 
-            {/* Şifre Kuralları */}
+            {/* Şifre Kuralları Mobilde çok yer kaplamasın diye font küçültülebilir */}
             <Box sx={{ textAlign: "left", mt: 1, mb: 1 }}>
               <Typography
                 variant="body2"
@@ -193,22 +200,23 @@ export default function Kayit() {
               <List dense disablePadding>
                 {[
                   { text: "En az 8 karakter", valid: sifreKurallari.uzunluk },
-                  { text: "Büyük harf içermeli (A-Z)", valid: sifreKurallari.buyuk },
-                  { text: "Küçük harf içermeli (a-z)", valid: sifreKurallari.kucuk },
-                  { text: "Rakam içermeli (0-9)", valid: sifreKurallari.rakam },
-                  { text: "Özel karakter içermeli (!@#$%^&*)", valid: sifreKurallari.ozel },
+                  { text: "Büyük harf (A-Z)", valid: sifreKurallari.buyuk },
+                  { text: "Küçük harf (a-z)", valid: sifreKurallari.kucuk },
+                  { text: "Rakam (0-9)", valid: sifreKurallari.rakam },
+                  { text: "Özel karakter (!@#$)", valid: sifreKurallari.ozel },
                 ].map((rule, index) => (
                   <ListItem key={index} sx={{ py: 0 }}>
                     {rule.valid ? (
-                      <CheckCircle color="success" sx={{ mr: 1, fontSize: 20 }} />
+                      <CheckCircle color="success" sx={{ mr: 1, fontSize: 18 }} />
                     ) : (
-                      <Cancel color="disabled" sx={{ mr: 1, fontSize: 20 }} />
+                      <Cancel color="action" sx={{ mr: 1, fontSize: 18, opacity: 0.5 }} />
                     )}
                     <ListItemText
                       primary={rule.text}
                       primaryTypographyProps={{
-                        fontSize: 13,
-                        color: rule.valid ? "green" : "gray",
+                        fontSize: 12, // Mobilde daha okunaklı
+                        color: rule.valid ? "success.main" : "text.secondary",
+                        sx: { opacity: rule.valid ? 1 : 0.7 }
                       }}
                     />
                   </ListItem>
@@ -216,7 +224,6 @@ export default function Kayit() {
               </List>
             </Box>
 
-            {/* Şifre Tekrar */}
             <TextField
               label="Şifre Tekrar"
               type={showRepeatPassword ? "text" : "password"}
@@ -240,32 +247,33 @@ export default function Kayit() {
               }}
             />
 
-            {/* Alertler */}
-            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ mt: 2 }}>{success}</Alert>}
+            {error && <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>{error}</Alert>}
+            {success && <Alert severity="success" sx={{ mt: 2, borderRadius: 2 }}>{success}</Alert>}
 
-            {/* Kayıt butonu */}
             <Button
               type="submit"
               variant="contained"
               fullWidth
               sx={{
                 mt: 3,
-                py: 1.2,
+                py: 1.5,
                 fontWeight: "bold",
-                borderRadius: 2,
-                background: "linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)",
+                borderRadius: 3,
+                textTransform: 'none',
+                fontSize: '1rem',
+                background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
                 "&:hover": {
-                  background: "linear-gradient(90deg, #1565c0 0%, #1e88e5 100%)",
+                    background: "linear-gradient(45deg, #1976D2 30%, #00BCD4 90%)",
+                  boxShadow: "0 6px 16px rgba(33, 150, 243, 0.4)",
                 },
-                boxShadow: "0px 3px 6px rgba(0,0,0,0.2)",
+                boxShadow: "0 3px 5px 2px rgba(33, 150, 243, .3)",
               }}
             >
               KAYIT OL
             </Button>
 
-            <Box mt={2}>
-              <MuiLink component={Link} to="/" underline="hover" color="primary">
+            <Box mt={3}>
+              <MuiLink component={Link} to="/" underline="hover" color="primary" fontWeight="500">
                 Zaten hesabın var mı? Giriş Yap
               </MuiLink>
             </Box>

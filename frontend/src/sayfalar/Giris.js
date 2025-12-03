@@ -11,6 +11,7 @@ import {
   IconButton,
   InputAdornment,
   Alert,
+  useTheme,
 } from "@mui/material";
 import { LockOutlined, Visibility, VisibilityOff } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
@@ -22,8 +23,10 @@ export default function Giris() {
   const [showPassword, setShowPassword] = useState(false);
   const [hata, setHata] = useState("");
   const [mesaj, setMesaj] = useState("");
+  
   const { girisYap } = useKimlik();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,7 +38,7 @@ export default function Giris() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: email, // hem e-posta hem kullanıcı adı kabul ediliyor
+          username: email,
           password: sifre,
         }),
       });
@@ -43,16 +46,12 @@ export default function Giris() {
       const data = await res.json();
 
       if (res.ok) {
-        // Başarılı giriş
         setMesaj(data.mesaj);
-
-        // 🔥 BACKEND'DEN GELEN TÜM KULLANICI BİLGİLERİNİ KAYDETTİK
         girisYap({
           id: data.id,
           username: data.username,
           email: data.email,
         });
-
         setTimeout(() => navigate("/akis"), 1200);
       } else {
         setHata(data.hata || "Giriş başarısız!");
@@ -62,31 +61,39 @@ export default function Giris() {
     }
   };
 
+  const isDark = theme.palette.mode === 'dark';
+
   return (
     <Box
       sx={{
-        height: "100vh",
+        minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         backgroundImage:
-          "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/images/kutuphane.jpeg')",
+          "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/images/kutuphane.jpeg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        p: 2, // Mobil kenar boşluğu
       }}
     >
       <Fade in timeout={700}>
         <Paper
-          elevation={10}
+          elevation={24}
           sx={{
-            width: 400,
-            p: 4,
+            // RESPONSIVE AYARLAR:
+            width: "100%",
+            maxWidth: 400, // Masaüstünde max 400px
+            p: { xs: 3, sm: 4 }, // Mobilde padding 3, masaüstünde 4
             borderRadius: 4,
-            backgroundColor: "rgba(255,255,255,0.85)",
-            backdropFilter: "blur(8px)",
+            backgroundColor: isDark 
+              ? "rgba(30, 30, 30, 0.85)" 
+              : "rgba(255, 255, 255, 0.9)",
+            backdropFilter: "blur(12px)",
             textAlign: "center",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.2)",
+            border: isDark ? "1px solid rgba(255,255,255,0.1)" : "none",
+            color: theme.palette.text.primary,
           }}
         >
           <Avatar
@@ -96,7 +103,7 @@ export default function Giris() {
               mb: 2,
               width: 56,
               height: 56,
-              boxShadow: 2,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
             }}
           >
             <LockOutlined />
@@ -120,6 +127,7 @@ export default function Giris() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              variant="outlined"
             />
 
             <TextField
@@ -144,8 +152,8 @@ export default function Giris() {
               }}
             />
 
-            {hata && <Alert severity="error" sx={{ mt: 2 }}>{hata}</Alert>}
-            {mesaj && <Alert severity="success" sx={{ mt: 2 }}>{mesaj}</Alert>}
+            {hata && <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>{hata}</Alert>}
+            {mesaj && <Alert severity="success" sx={{ mt: 2, borderRadius: 2 }}>{mesaj}</Alert>}
 
             <Button
               type="submit"
@@ -153,32 +161,35 @@ export default function Giris() {
               fullWidth
               sx={{
                 mt: 3,
-                py: 1.2,
+                py: 1.5,
                 fontWeight: "bold",
-                borderRadius: 2,
-                background:
-                  "linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)",
+                borderRadius: 3,
+                textTransform: 'none',
+                fontSize: '1rem',
+                background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
                 "&:hover": {
-                  background:
-                    "linear-gradient(90deg, #1565c0 0%, #1e88e5 100%)",
+                  background: "linear-gradient(45deg, #1976D2 30%, #00BCD4 90%)",
+                  boxShadow: "0 6px 16px rgba(33, 150, 243, 0.4)",
                 },
-                boxShadow: "0px 3px 6px rgba(0,0,0,0.3)",
+                boxShadow: "0 3px 5px 2px rgba(33, 150, 243, .3)",
               }}
             >
               GİRİŞ YAP
             </Button>
 
             <Box
-              mt={2}
+              mt={3}
               display="flex"
               justifyContent="space-between"
               fontSize={14}
+              sx={{ flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }} // Mobilde linkleri alt alta al
             >
               <MuiLink
                 component={Link}
                 to="/sifre-unuttum"
                 underline="hover"
-                sx={{ color: "#1565c0" }}
+                color="primary" 
+                fontWeight="500"
               >
                 Şifremi Unuttum
               </MuiLink>
@@ -187,7 +198,8 @@ export default function Giris() {
                 component={Link}
                 to="/kayit"
                 underline="hover"
-                sx={{ color: "#1565c0" }}
+                color="primary"
+                fontWeight="500"
               >
                 Kayıt Ol
               </MuiLink>

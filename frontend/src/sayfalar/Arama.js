@@ -76,7 +76,7 @@ export default function Arama() {
     async function tumVitrinleriGetir() {
       try {
         // Harry vitrin
-        const resHarry = await fetch("http://127.0.0.1:8000/api/global-arama/?q=Harry");
+        const resHarry = await fetch("http://127.0.0.1:8000/api/global-arama/?q=Harry Potter");
         const dataHarry = await resHarry.json();
         setVitrinIcerik(dataHarry);
 

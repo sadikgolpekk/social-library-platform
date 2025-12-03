@@ -83,7 +83,7 @@ export default function UstMenu({ darkMode, toggleDarkMode }) {
               }}
             >
               <MenuBook sx={{ fontSize: { xs: 28, sm: 32 } }} />
-              Sosyal Kütüphane
+              Gladio Film
             </Typography>
 
             {/* Dark Mode Toggle */}

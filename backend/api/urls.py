@@ -5,10 +5,10 @@ from .views import (
     PuanGorunum, YorumGorunum, KutuphaneGorunum,
     OzelListeGorunum, OzelListeIcerikGorunum,
     AktiviteGorunum,
-    kullanici_kayit, kullanici_giris, sifre_sifirla,
+    kullanici_kayit, kullanici_giris,
     global_arama, icerik_detay, feed,kullanici_ara,takip_sil,kutuphane_durum,kutuphane_durum,ozel_liste_icerik_kontrol
     ,ozel_listeleri_getir,kutuphane_sil,ozel_liste_sil,ozel_liste_icerik_sil,ozel_liste_duzenle,vitrin_en_populer
-    ,vitrin_en_yuksek_puanli,gelismis_filtre,aktivite_like,aktivite_yorum,aktivite_yorumlar
+    ,vitrin_en_yuksek_puanli,gelismis_filtre,aktivite_like,aktivite_yorum,aktivite_yorumlar,kod_gonder,sifre_degistir,kod_dogrula
 )
 
 router = routers.DefaultRouter()
@@ -31,7 +31,9 @@ urlpatterns = [
     # Kayıt / Giriş / Şifre
     path("kayit/", kullanici_kayit),
     path("giris/", kullanici_giris),
-    path("sifre-sifirla/", sifre_sifirla),
+    path('kod-gonder/', kod_gonder, name='kod-gonder'),
+    path('kod-dogrula/', kod_dogrula, name='kod-dogrula'),
+    path('sifre-degistir/', sifre_degistir, name='sifre-degistir'),
 
     # Arama & Detay
     path("global-arama/", global_arama),

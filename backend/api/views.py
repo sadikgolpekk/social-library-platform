@@ -350,34 +350,104 @@ def kullanici_giris(request):
         })
     return Response({'hata': 'Kullanıcı adı veya şifre hatalı.'}, status=401)
 
+from django.core.mail import send_mail
+from django.core.cache import cache
+from django.contrib.auth.hashers import make_password
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework import permissions
+from rest_framework.response import Response
+from django.contrib.auth.models import User
+import random
+import string
 
+# 1. ADIM: E-POSTA İLE DOĞRULAMA KODU GÖNDERME
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
-def sifre_sifirla(request):
+def kod_gonder(request):
     email = request.data.get("email")
+    
     try:
         user = User.objects.get(email=email)
     except User.DoesNotExist:
-        return Response({"hata": "Bu e-posta bulunamadı"}, status=404)
+        return Response({"hata": "Bu e-posta adresiyle kayıtlı kullanıcı bulunamadı."}, status=404)
 
-    import random, string
-    yeni_sifre = "".join(random.choices(string.ascii_letters + string.digits, k=10))
-    user.password = make_password(yeni_sifre)
-    user.save()
+    # 6 Haneli Sadece Rakamlardan Oluşan Kod (Örn: 482910)
+    dogrulama_kodu = "".join(random.choices(string.digits, k=6))
+
+    # Kodu 5 dakika (300 saniye) sakla. Key: "reset_code_user@mail.com"
+    cache.set(f"reset_code_{email}", dogrulama_kodu, timeout=300)
+
+    # Konsola yazdıralım ki test ederken görebil (Development modu)
+    print(f"--- SIFIRLAMA KODU ({email}): {dogrulama_kodu} ---")
 
     try:
         send_mail(
-            subject="🔐 Sosyal Kütüphane - Şifre Sıfırlama",
-            message=f"Merhaba {user.username},\n\nYeni Şifreniz: {yeni_sifre}",
+            subject="🔐 Doğrulama Kodunuz - Sosyal Kütüphane",
+            message=f"Merhaba {user.username},\n\nŞifre sıfırlama kodunuz: {dogrulama_kodu}\n\nBu kod 5 dakika süreyle geçerlidir.",
             from_email=None,
             recipient_list=[email],
             fail_silently=True,
         )
+        return Response({"mesaj": "Doğrulama kodu e-postana gönderildi!"})
     except:
-        pass
+        return Response({"hata": "E-posta gönderilemedi."}, status=500)
+    
 
-    print(f"ŞİFRE SIFIRLANDI: {email} -> {yeni_sifre}")
-    return Response({"mesaj": "Yeni şifre e-postaya gönderildi!"})
+
+# api/views.py dosyasının içine mevcutların yanına ekle:
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def kod_dogrula(request):
+    """
+    Kullanıcı kodu girdiği an (şifre ekranına geçmeden önce)
+    kodun doğru olup olmadığını kontrol eder.
+    """
+    email = request.data.get("email")
+    kod = request.data.get("kod")
+
+    kayitli_kod = cache.get(f"reset_code_{email}")
+
+    if not kayitli_kod:
+        return Response({"hata": "Kodun süresi dolmuş veya hatalı işlem."}, status=400)
+    
+    if str(kayitli_kod) != str(kod):
+        return Response({"hata": "Girdiğiniz kod hatalı!"}, status=400)
+
+    # Kod doğruysa başarılı dön, ama kodu SİLME. 
+    # Çünkü birazdan şifre değiştirirken tekrar lazım olacak.
+    return Response({"mesaj": "Kod doğrulandı."})
+
+
+# 2. ADIM: KODU VE YENİ ŞİFREYİ ALIP GÜNCELLEME
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def sifre_degistir(request):
+    email = request.data.get("email")
+    kod = request.data.get("kod")
+    yeni_sifre = request.data.get("yeni_sifre")
+
+    # Cache'deki kod ile gelen kod aynı mı?
+    kayitli_kod = cache.get(f"reset_code_{email}")
+
+    if not kayitli_kod:
+        return Response({"hata": "Kodun süresi dolmuş veya hatalı işlem."}, status=400)
+    
+    if str(kayitli_kod) != str(kod):
+        return Response({"hata": "Girdiğiniz kod hatalı!"}, status=400)
+
+    # Kod doğruysa şifreyi güncelle
+    try:
+        user = User.objects.get(email=email)
+        user.password = make_password(yeni_sifre)
+        user.save()
+        
+        # Kullanılan kodu sil (Tek kullanımlık olsun)
+        cache.delete(f"reset_code_{email}")
+        
+        return Response({"mesaj": "Şifreniz başarıyla güncellendi! Giriş yapabilirsiniz."})
+    except User.DoesNotExist:
+        return Response({"hata": "Kullanıcı bulunamadı."}, status=404)
     
 
 # ------------------------------------------------------------
