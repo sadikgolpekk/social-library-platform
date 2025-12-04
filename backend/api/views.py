@@ -1159,31 +1159,29 @@ def aktivite_yorum(request):
 
 
 
+from django.contrib.humanize.templatetags.humanize import naturaltime
+
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 def aktivite_yorumlar(request, aktivite_id):
-    try:
-        from .models import AktiviteYorum
-        aktivite_yorumlari = (
-            AktiviteYorum.objects
-            .filter(aktivite_id=aktivite_id)
-            .select_related("kullanici")
-            .order_by("-tarih")
-        )
+    qs = AktiviteYorum.objects.filter(aktivite_id=aktivite_id).select_related("kullanici__profil").order_by("-tarih")
+    res = []
+    for y in qs:
+        # Avatar (ImageField/TextField kontrolü)
+        av = None
+        if hasattr(y.kullanici, 'profil') and y.kullanici.profil.avatar:
+             try:
+                 av = y.kullanici.profil.avatar.url
+             except:
+                 av = y.kullanici.profil.avatar
 
-        sonuc = []
-        for y in aktivite_yorumlari:
-            sonuc.append({
-                "id": y.id,
-                "kullanici_adi": y.kullanici.username,
-                "kullanici_avatar": getattr(y.kullanici.profil, "avatar", None),
-                "yorum": y.yorum,
-                "tarih": y.tarih.strftime("%d.%m.%Y %H:%M"),
-            })
-
-        return Response({"yorumlar": sonuc})
-
-    except Exception as e:
-        print("Yorumlar getirilemedi:", e)
-        return Response({"yorumlar": []})
-
+        res.append({
+            "id": y.id, 
+            "kullanici_adi": y.kullanici.username, 
+            "kullanici_avatar": av, 
+            "yorum": y.yorum, 
+            
+            # 🔥 DEĞİŞİKLİK BURADA: strftime YERİNE naturaltime KULLANDIK
+            "tarih": naturaltime(y.tarih) 
+        })
+    return Response({"yorumlar": res})

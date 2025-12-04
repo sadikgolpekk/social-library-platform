@@ -210,6 +210,12 @@ export default function Profil() {
 
       if (res.ok) {
         setTakipEdiyorMu(true);
+        
+        // 🔥 YENİ EKLENEN SATIR: Takipçi sayısını anlık artır
+        setProfil(prev => ({
+            ...prev, 
+            takipci_sayisi: (prev.takipci_sayisi || 0) + 1
+        }));
 
         setSnackbar({
           acik: true,
@@ -217,22 +223,15 @@ export default function Profil() {
           tip: "success",
         });
       } else {
-        setSnackbar({
-          acik: true,
-          mesaj: "Takip başarısız.",
-          tip: "error",
-        });
+        setSnackbar({ acik: true, mesaj: "Takip başarısız.", tip: "error" });
       }
     } catch (err) {
       console.error("Takip hatası:", err);
-      setSnackbar({
-        acik: true,
-        mesaj: "Takip işlemi sırasında hata.",
-        tip: "error",
-      });
+      setSnackbar({ acik: true, mesaj: "Hata oluştu.", tip: "error" });
     }
   }
 
+  // TAKİP BIRAK
   async function takipBirak() {
     try {
       const res = await fetch(
@@ -243,25 +242,23 @@ export default function Profil() {
       if (res.status === 204) {
         setTakipEdiyorMu(false);
 
+        // 🔥 YENİ EKLENEN SATIR: Takipçi sayısını anlık azalt
+        setProfil(prev => ({
+            ...prev, 
+            takipci_sayisi: Math.max(0, (prev.takipci_sayisi || 0) - 1)
+        }));
+
         setSnackbar({
           acik: true,
           mesaj: "Kullanıcı takipten çıkarıldı.",
           tip: "success",
         });
       } else {
-        setSnackbar({
-          acik: true,
-          mesaj: "Takipten çıkarılamadı.",
-          tip: "error",
-        });
+        setSnackbar({ acik: true, mesaj: "İşlem başarısız.", tip: "error" });
       }
     } catch (err) {
       console.error("Takip bırak hata:", err);
-      setSnackbar({
-        acik: true,
-        mesaj: "Takip bırakılırken bir hata oluştu.",
-        tip: "error",
-      });
+      setSnackbar({ acik: true, mesaj: "Hata oluştu.", tip: "error" });
     }
   }
 
@@ -595,26 +592,29 @@ export default function Profil() {
                   </Typography>
                 )}
 
-                {/* DÜZENLEME MODU */}
+               {/* DÜZENLEME MODU (DÜZELTİLMİŞ) */}
                 {duzenlemeModu && (
                   <Fade in>
                     <Box
                       sx={{
                         mt: 3,
                         p: 3,
-                        bgcolor: "rgba(255,255,255,0.15)",
+                        // 🔥 DÜZELTME 1: Arka planı yarı saydam siyah yaptık (Hem Dark hem Light modda okunur)
+                        bgcolor: "rgba(0, 0, 0, 0.75)", 
                         backdropFilter: "blur(10px)",
                         borderRadius: 3,
-                        border: "2px dashed rgba(255,255,255,0.3)",
+                        border: "1px solid rgba(255,255,255,0.2)",
+                        boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
                       }}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={dosyaSurukle}
                     >
                       <Typography
                         variant="body2"
-                        sx={{ mb: 2, fontWeight: 500 }}
+                        // 🔥 DÜZELTME 2: Yazı rengini zorla beyaz yaptık
+                        sx={{ mb: 2, fontWeight: 600, color: "#ffffff" }}
                       >
-                        📸 Profil Fotoğrafı (Sürükle & Bırak)
+                        📸 Profil Fotoğrafı (Sürükle & Bırak veya Seç)
                       </Typography>
 
                       <Button
@@ -622,9 +622,10 @@ export default function Profil() {
                         component="label"
                         sx={{
                           bgcolor: "white",
-                          color: "#667eea",
-                          "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                          mb: 2,
+                          color: "#333",
+                          fontWeight: "bold",
+                          "&:hover": { bgcolor: "#f0f0f0" },
+                          mb: 3,
                         }}
                       >
                         Dosya Seç
@@ -643,23 +644,32 @@ export default function Profil() {
                         rows={3}
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
+                        variant="outlined"
                         sx={{
-                          bgcolor: "rgba(255,255,255,0.9)",
-                          borderRadius: 2,
+                          mb: 3,
+                          // 🔥 DÜZELTME 3: TextField renklerini beyaza uyarladık
+                          "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.7)" },
+                          "& .MuiInputLabel-root.Mui-focused": { color: "white" },
                           "& .MuiOutlinedInput-root": {
-                            "& fieldset": { border: "none" },
+                            color: "white",
+                            bgcolor: "rgba(255,255,255,0.1)", // Hafif şeffaf beyaz arka plan
+                            "& fieldset": { borderColor: "rgba(255,255,255,0.3)" },
+                            "&:hover fieldset": { borderColor: "white" },
+                            "&.Mui-focused fieldset": { borderColor: "white" },
                           },
                         }}
                       />
 
-                      <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+                      <Box sx={{ display: "flex", gap: 2 }}>
                         <Button
                           variant="contained"
                           onClick={profilKaydet}
                           sx={{
-                            bgcolor: "white",
-                            color: "#667eea",
-                            "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+                            bgcolor: "#4caf50", // Yeşil
+                            color: "white",
+                            fontWeight: "bold",
+                            "&:hover": { bgcolor: "#43a047" },
+                            flex: 1
                           }}
                         >
                           Kaydet
@@ -669,12 +679,15 @@ export default function Profil() {
                           variant="outlined"
                           onClick={() => setDuzenlemeModu(false)}
                           sx={{
-                            borderColor: "white",
+                            borderColor: "rgba(255,255,255,0.5)",
                             color: "white",
-                            "&:hover": {
-                              borderColor: "white",
-                              bgcolor: "rgba(255,255,255,0.1)",
+                            fontWeight: "bold",
+                            "&:hover": { 
+                                borderColor: "#ffcdd2", 
+                                color: "#ffcdd2",
+                                bgcolor: "rgba(255,0,0,0.1)" 
                             },
+                            flex: 1
                           }}
                         >
                           İptal
@@ -907,13 +920,9 @@ export default function Profil() {
                           {icerik.baslik}
                         </Typography>
 
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 2 }}
-                        >
-                          {icerik.yil}
-                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.85rem' }}>
+                    {icerik.yil ? `${icerik.yil} Yapımı` : ""}
+                 </Typography>
 
                         <Box
                           sx={{
@@ -1051,13 +1060,9 @@ export default function Profil() {
                         {y.icerik.baslik}
                       </Typography>
 
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mb: 1.5 }}
-                      >
-                        {y.icerik.yil}
-                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.85rem' }}>
+                    {y.icerik.yil ? `${y.icerik.yil} Yapımı` : ""}
+                  </Typography>
 
                       <Typography
                         variant="body1"
@@ -1156,13 +1161,9 @@ export default function Profil() {
                           {p.icerik.baslik}
                         </Typography>
 
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 1 }}
-                        >
-                          {p.icerik.yil}
-                        </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.85rem' }}>
+                            {p.icerik.yil ? `${p.icerik.yil} Yapımı` : ""}
+                          </Typography>
 
                         <Chip
                           icon={<StarIcon sx={{ fontSize: 16 }} />}
@@ -1311,8 +1312,8 @@ export default function Profil() {
                             </Typography>
 
                             <Typography variant="body2" color="text.secondary">
-                              {ic.yil}
-                            </Typography>
+                            {ic.yil ? `${ic.yil} Yapımı` : ""}
+                          </Typography>
 
                             {kendiProfili && (
                               <Button
