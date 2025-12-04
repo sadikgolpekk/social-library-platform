@@ -19,6 +19,7 @@ import {
   Chip,
   alpha,
   Fade,
+  Link as MuiLink
 } from "@mui/material";
 import {
   FavoriteBorder,
@@ -314,6 +315,62 @@ export default function Akis() {
     setYorumAc(false);
   }
 
+ // --- EKLENECEK KISIM BAŞLANGIÇ ---
+  
+  // Yorum metnini düzenleyen fonksiyon (DÜZELTİLMİŞ)
+  const renderYorumMetni = (metin, a) => {
+    const MAX_KARAKTER = 20;
+    if (!metin) return null;
+
+    const uzun = metin.length > MAX_KARAKTER;
+    const gosterilecekMetin = uzun ? metin.substring(0, MAX_KARAKTER) + "..." : metin;
+
+    return (
+      <Box>
+        <Typography 
+            variant="body2" 
+            sx={{ 
+                fontStyle: "italic", 
+                color: "text.secondary",
+                wordBreak: "break-word", // Kelimeleri satır sonuna gelince böl
+                whiteSpace: "pre-wrap",  // Satır boşluklarını koru ama taşma yapma
+                overflow: "hidden",
+                textOverflow: "ellipsis"
+            }}
+        >
+          "{gosterilecekMetin}"
+          
+          {uzun && (
+            <MuiLink
+                component="button"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/detay/${a.content_type}/${a.content_id}`);
+                }}
+                sx={{ 
+                    ml: 1, 
+                    fontWeight: 'bold', 
+                    fontSize: '0.85rem', 
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    verticalAlign: 'baseline',
+                    color: 'primary.main'
+                }}
+            >
+                daha fazlasını oku
+            </MuiLink>
+          )}
+        </Typography>
+      </Box>
+    );
+  };
+  // --- EKLENECEK KISIM BİTİŞ ---
+
+
+
+
+
+
   return (
     <Box
       sx={{
@@ -535,26 +592,25 @@ export default function Akis() {
                         />
                       )}
 
-                      {a.aktivite_turu === "review" && (
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            mt: 1,
-                            p: 1.5,
-                            bgcolor: "action.hover",
-                            borderRadius: 2,
-                            borderLeft: "3px solid",
-                            borderColor: "primary.main",
-                          }}
-                        >
-                          <Typography
-                            variant="body2"
-                            sx={{ fontStyle: "italic", color: "text.secondary" }}
-                          >
-                            "{a.content_info.yorum}"
-                          </Typography>
-                        </Paper>
-                      )}
+                      {/* --- YORUM ALANI (GÜNCELLENMİŞ) --- */}
+                    {a.aktivite_turu === "review" && (
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          mt: 1,
+                          p: 1.5,
+                          bgcolor: "action.hover",
+                          borderRadius: 2,
+                          borderLeft: "4px solid", // Çizgiyi biraz kalınlaştırdık
+                          borderColor: "primary.main",
+                          maxWidth: "100%", // Genişliği sınırla
+                          overflow: "hidden" // Taşanları gizle
+                        }}
+                      >
+                        {/* Artık Typography'i fonksiyonun içinde tanımladık, direkt çağırıyoruz */}
+                        {renderYorumMetni(a.content_info.yorum, a)}
+                      </Paper>
+                    )}
 
                       {a.aktivite_turu === "library" && (
                         <Chip

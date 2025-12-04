@@ -896,16 +896,21 @@ export default function IcerikDetay() {
                           </Box>
                         </Box>
 
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            lineHeight: 1.7,
-                            fontSize: "1rem",
-                            pl: 1,
-                          }}
-                        >
-                          {y.yorum}
-                        </Typography>
+                      
+
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              lineHeight: 1.7,
+                              fontSize: "1rem",
+                              pl: 1,
+                              // 🔥 BU İKİ SATIRI EKLE:
+                              wordBreak: "break-word", // Uzun kelimeleri böl
+                              whiteSpace: "pre-wrap",  // Satır boşluklarını koru
+                            }}
+                          >
+                            {y.yorum}
+                          </Typography>
                       </Paper>
                     </Zoom>
                   );
