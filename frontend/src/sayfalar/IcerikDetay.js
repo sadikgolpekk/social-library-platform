@@ -45,6 +45,25 @@ import {
 import { useKimlik } from "../baglam/KimlikBaglami";
 import { useTheme } from "@mui/material/styles";
 
+// --- ZAMAN HESAPLAMA FONKSİYONU ---
+function zamanHesapla(tarihString) {
+  if (!tarihString) return "";
+  const tarih = new Date(tarihString);
+  const simdi = new Date();
+  const farkSaniye = Math.floor((simdi - tarih) / 1000);
+
+  if (farkSaniye < 60) return "Az önce";
+  const dakika = Math.floor(farkSaniye / 60);
+  if (dakika < 60) return `${dakika} dakika önce`;
+  const saat = Math.floor(dakika / 60);
+  if (saat < 24) return `${saat} saat önce`;
+  const gun = Math.floor(saat / 24);
+  if (gun < 30) return `${gun} gün önce`;
+  const ay = Math.floor(gun / 30);
+  if (ay < 12) return `${ay} ay önce`;
+  return `${Math.floor(ay / 12)} yıl önce`;
+}
+
 export default function IcerikDetay() {
   const { tur, id } = useParams();
   const { kullanici } = useKimlik();
@@ -66,10 +85,11 @@ export default function IcerikDetay() {
 
   const [listeler, setListeler] = useState([]);
   const [listeAnchor, setListeAnchor] = useState(null);
+  
   const listeMenusuAc = (e) => setListeAnchor(e.currentTarget);
   const listeMenusuKapat = () => setListeAnchor(null);
 
-  // 🔥 Silme popup state
+  // Silme popup state
   const [silPopupAcik, setSilPopupAcik] = useState(false);
   const [silinenYorumId, setSilinenYorumId] = useState(null);
 
@@ -155,7 +175,7 @@ export default function IcerikDetay() {
         ...veri,
         yorumlar: [
           {
-            id: data.id,
+            id: data.id || Math.random(), 
             kullanici: aktifKullaniciId,
             kullanici_username: kullanici.username,
             yorum: yorum,
@@ -176,16 +196,13 @@ export default function IcerikDetay() {
   }
 
   // ------------------------------------------------------
-  // 🔥 YORUM SİLME – MODERN POPUP
+  // 🔥 YORUM SİLME
   // ------------------------------------------------------
-
-  // Silme popup’ını aç
   function yorumSilOnayla(yorumId) {
     setSilinenYorumId(yorumId);
     setSilPopupAcik(true);
   }
 
-  // Silmeyi gerçekten yap
   async function yorumSil() {
     try {
       await fetch(`http://127.0.0.1:8000/api/yorum/${silinenYorumId}/`, {
@@ -223,12 +240,14 @@ export default function IcerikDetay() {
         body: JSON.stringify({ yorum }),
       });
 
-      const guncel = veri.yorumlar.map((y) =>
-        y.id === duzenlemeModu ? { ...y, yorum } : y
-      );
-
       const guncellenmis = veri.yorumlar.map((y) =>
-        y.id === duzenlenecekId ? { ...y, yorum } : y
+        y.id === duzenlenecekId 
+            ? { 
+                ...y, 
+                yorum, 
+                tarih: new Date().toISOString() 
+              } 
+            : y
       );
 
       setVeri({ ...veri, yorumlar: guncellenmis });
@@ -314,9 +333,6 @@ export default function IcerikDetay() {
     }
   }
 
-  // ------------------------------------------------------
-  // Kütüphane butonu stili
-  // ------------------------------------------------------
   const kutuphaneButonStil = (aktif) => ({
     borderRadius: 2,
     border: `1px solid ${alpha(
@@ -327,9 +343,6 @@ export default function IcerikDetay() {
     mx: 0.5,
   });
 
-  // ------------------------------------------------------
-  // LOADING
-  // ------------------------------------------------------
   if (yukleniyor)
     return (
       <Box
@@ -780,12 +793,8 @@ export default function IcerikDetay() {
                     (y.kullanici === aktifKullaniciId ||
                       y.kullanici_id === aktifKullaniciId);
 
-                  const tarihMetni = y.tarih
-                    ? new Date(y.tarih).toLocaleString("tr-TR", {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      })
-                    : "";
+                  // 🔥 ZAMAN HESAPLAMA (Canlı gösterim için)
+                  const tarihGoster = y.tarih ? zamanHesapla(y.tarih) : "";
 
                   return (
                     <Zoom in timeout={300 + index * 100} key={y.id}>
@@ -859,14 +868,14 @@ export default function IcerikDetay() {
                               gap: 1,
                             }}
                           >
-                            {tarihMetni && (
-                              <Typography
+                            {/* 🔥 ZAMAN GÖSTERİMİ BURADA */}
+                            <Typography
                                 variant="caption"
                                 color="text.secondary"
-                              >
-                                {tarihMetni}
-                              </Typography>
-                            )}
+                                sx={{ fontStyle: 'italic', mr: 1 }}
+                            >
+                                {tarihGoster}
+                            </Typography>
 
                             {kendiYorumum && (
                               <>
@@ -896,21 +905,21 @@ export default function IcerikDetay() {
                           </Box>
                         </Box>
 
-                      
+                        <Box>
+                             <Typography
+                                variant="body1"
+                                sx={{
+                                    lineHeight: 1.7,
+                                    fontSize: "1rem",
+                                    pl: 1,
+                                    wordBreak: "break-word",
+                                    whiteSpace: "pre-wrap",
+                                }}
+                             >
+                                {y.yorum}
+                             </Typography>
+                        </Box>
 
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              lineHeight: 1.7,
-                              fontSize: "1rem",
-                              pl: 1,
-                              // 🔥 BU İKİ SATIRI EKLE:
-                              wordBreak: "break-word", // Uzun kelimeleri böl
-                              whiteSpace: "pre-wrap",  // Satır boşluklarını koru
-                            }}
-                          >
-                            {y.yorum}
-                          </Typography>
                       </Paper>
                     </Zoom>
                   );

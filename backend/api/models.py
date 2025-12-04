@@ -47,7 +47,7 @@ class Yorum(models.Model):
     content_id = models.CharField(max_length=100)
     content_type = models.CharField(max_length=10)
     yorum = models.TextField()
-    tarih = models.DateTimeField(default=timezone.now)
+    tarih = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.kullanici.username}: {self.yorum[:20]}"
