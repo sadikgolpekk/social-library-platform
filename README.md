@@ -12,11 +12,19 @@ KütüpBox, kullanıcıların içerikleri (film, dizi, kitap vb.) keşfedebildi�
 
 Bu depo, platformun **frontend (React)** ve **backend (Django REST)** bileşenlerini içeren bütünleşik bir yapıyı temsil eder.
 
+
+<img width="709" height="801" alt="image" src="https://github.com/user-attachments/assets/d0c4f616-6e56-4ce5-8982-8214aa44ddce" />
+
+
+
 ---
 
 ## Temel Amaç
 
 Projenin temel amacı, kullanıcıların içerikler üzerinden sosyal etkileşime girebildiği, kişisel kütüphanelerini oluşturabildiği ve takip ettikleri kişilerin aktivitelerini bir akış ekranında görüntüleyebildiği ölçeklenebilir bir platform geliştirmektir.
+
+
+<img width="652" height="764" alt="image" src="https://github.com/user-attachments/assets/b3a08cf3-5033-4c78-ba69-09efc01de697" />
 
 ---
 
@@ -29,6 +37,8 @@ Projenin temel amacı, kullanıcıların içerikler üzerinden sosyal etkileşim
 
 Frontend ve backend katmanları birbirinden bağımsız çalışacak şekilde tasarlanmıştır.
 
+<img width="999" height="444" alt="image" src="https://github.com/user-attachments/assets/6209d3db-17e1-44b2-8042-759c5e4a43f8" />
+
 ---
 
 ## Mevcut Durum ve Bilinen Kısıtlar
@@ -38,6 +48,9 @@ Frontend ve backend katmanları birbirinden bağımsız çalışacak şekilde ta
 * Performans iyileştirmeleri (bileşen ayrıştırma, render optimizasyonları vb.) ilerleyen geliştirme aşamalarında ele alınması planlanan konular arasındadır.
 * Bu haliyle tam işlevli çalışıyor fakat geç açılma durumu projenin performansını düşürüyor.
 ---
+
+<img width="517" height="526" alt="image" src="https://github.com/user-attachments/assets/aa78961c-1866-4f24-879f-7960334ef8e9" />
+
 
 ## Geliştirme Durumu
 
