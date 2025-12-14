@@ -168,5 +168,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = "dortyuz9@gmail.com"
-EMAIL_HOST_PASSWORD = "ydxo yqpa uszn fivc"   # Uygulama şifresi
+EMAIL_HOST_PASSWORD = "........"   # Uygulama şifresi
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
