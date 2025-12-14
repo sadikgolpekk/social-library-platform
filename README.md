@@ -51,6 +51,9 @@ Frontend ve backend katmanları birbirinden bağımsız çalışacak şekilde ta
 
 <img width="517" height="526" alt="image" src="https://github.com/user-attachments/assets/aa78961c-1866-4f24-879f-7960334ef8e9" />
 
+<img width="675" height="700" alt="image" src="https://github.com/user-attachments/assets/9ae66b07-8dd4-41e2-b8a4-af682c6da15d" />
+
+
 
 ## Geliştirme Durumu
 
