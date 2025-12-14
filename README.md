@@ -10,7 +10,7 @@
 
 KütüpBox, kullanıcıların içerikleri (film, dizi, kitap vb.) keşfedebildiği, kütüphanesine ekleyebildiği, değerlendirme ve yorum yapabildiği sosyal etkileşim odaklı bir web platformudur. Sistem; kullanıcı profilleri, takip mekanizması ve kişiselleştirilmiş akış (feed) yapısı üzerine kuruludur.
 
-Bu depo, platformun **frontend (React)** ve **backend (Django REST)** bileşenlerini içeren bütünleşik bir yapıyı temsil eder.
+Bu depo, platformun **frontend (React)** ve **backend (Django REST)** bileşenlerini içeren bütünleşik bir yapıyı temsil eder.Mobil uyumlu çalışır.
 
 
 <img width="709" height="801" alt="image" src="https://github.com/user-attachments/assets/d0c4f616-6e56-4ce5-8982-8214aa44ddce" />
